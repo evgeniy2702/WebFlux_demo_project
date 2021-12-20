@@ -5,7 +5,10 @@ import com.example.WebFlux_demo_project.handlers.GreetingHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.*;
+
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 
 @Configuration(proxyBeanMethods = false)
 public class GreetingRouter {
@@ -13,8 +16,22 @@ public class GreetingRouter {
     @Bean
     public RouterFunction<ServerResponse> route(GreetingHandler greetingHandler) {
 
+        RequestPredicate route_hello = GET("/hello")
+                .and(RequestPredicates.accept(MediaType.TEXT_PLAIN));
+
         return RouterFunctions
-                .route(RequestPredicates.GET("/hello")
-                        .and(RequestPredicates.accept(MediaType.APPLICATION_JSON)), greetingHandler::hello);
+
+                .route(route_hello, greetingHandler::hello)
+                .andRoute(
+                        GET("/"),
+                        ServerRequest -> {
+                            return ServerResponse
+                                    .ok()
+                                    .contentType(MediaType.TEXT_PLAIN)
+                                    .body(BodyInserters.fromValue("Main page"));
+                        }
+                )
+                .andRoute(
+                        GET("/user"), greetingHandler::user);
     }
 }
